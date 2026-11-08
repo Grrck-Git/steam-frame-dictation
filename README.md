@@ -54,7 +54,7 @@ Uninstall:
 - Chime means it is safe to speak.
 - It is safe to make short pauses. The dictation continues committing the text.
 - A long pause stops dictation. You hear a chime when it happens.
-- Press aux while dictating to stop immediately, and send all recorded text + the Return key.
+- Press aux while dictating to stop recording and finish typing the pending text without pressing Return.
 
 During active dictation, the service lowers system audio volume, then restores the previous volume when dictation stops.
 

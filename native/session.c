@@ -28,15 +28,8 @@ void run_utterance(app *a, int efd) {
             struct input_event ev;
             if (read(efd, &ev, sizeof(ev)) == sizeof(ev)) {
                 if (ev.type == EV_KEY && ev.code == a->key && ev.value == 1) {
-                    fprintf(stderr,"aux pressed during dictation: end now + return\n");
-                    if(in_segment && segment.n) {
-                        fprintf(stderr,"commit (aux-return): %.2fs audio\n", (double)segment.n/2.0/(double)a->rate);
-                        segq_push(&a->segq,&segment,true);
-                    } else {
-                        struct bytes empty={0};
-                        segq_push(&a->segq,&empty,true);
-                    }
-                    goto done_recording;
+                    fprintf(stderr,"aux pressed during dictation: finish recording\n");
+                    break;
                 } else if (ev.type == EV_KEY && ev.code == KEY_VOLUMEUP && ev.value != 0) {
                     audio_policy_volume_up(a);
                 }
@@ -59,13 +52,12 @@ void run_utterance(app *a, int efd) {
         if(in_segment) bytes_append(&segment,buf,(size_t)nr);
         if(in_segment && now-last_voice >= a->actionable_pause) {
             fprintf(stderr,"commit (%.1fs actionable pause): %.2fs audio\n", a->actionable_pause, (double)segment.n/2.0/(double)a->rate);
-            segq_push(&a->segq,&segment,false); in_segment=false; bytes_clear(&preroll);
+            segq_push(&a->segq,&segment); in_segment=false; bytes_clear(&preroll);
         }
         if(speech_seen && now-last_voice >= a->final_pause) { fprintf(stderr,"final pause detected (%.1fs)\n", a->final_pause); break; }
         if(!speech_seen && now-started >= a->no_speech_timeout) { fprintf(stderr,"no speech detected\n"); break; }
     }
-done_recording:
-    if(in_segment && segment.n) { fprintf(stderr,"commit (final): %.2fs audio\n", (double)segment.n/2.0/(double)a->rate); segq_push(&a->segq,&segment,false); }
+    if(in_segment && segment.n) { fprintf(stderr,"commit (final): %.2fs audio\n", (double)segment.n/2.0/(double)a->rate); segq_push(&a->segq,&segment); }
     audio_policy_end(a);
     if(!a->no_sounds) play_sound(a->end_sound,false);
     bytes_free(&segment); bytes_free(&preroll); free(buf); close(afd); stop_child(recpid);

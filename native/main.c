@@ -75,7 +75,7 @@ static void usage(FILE *out, const char *argv0) {
     fprintf(out, "Steam Frame Dictation — offline voice typing\nUsage: %s [options]\n\n", argv0);
     fputs(
         "Press aux to start; short pauses commit silently, long pauses stop.\n"
-        "Press aux again to stop and send Return after pending text.\n\n"
+        "Press aux again to stop recording and finish typing without pressing Return.\n\n"
         "General:\n"
         "  -h, --help                    Show this help and exit\n"
         "  -V, --version                 Print build revision and exit\n"
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
     struct whisper_context_params cparams = whisper_context_default_params();
     a.whisper_ctx = whisper_init_from_file_with_params(a.whisper_model, cparams);
     if(!a.whisper_ctx){fprintf(stderr,"failed to load whisper model\n"); return 1;}
-    fprintf(stderr,"Ready. Press aux/side to start; short pauses commit silently, long pause stops. Press aux while dictating to stop early and send Return.\n");
+    fprintf(stderr,"Ready. Press aux/side to start; short pauses commit silently, long pause stops. Press aux while dictating to stop early and finish typing.\n");
     if(!a.no_sounds){ fprintf(stderr,"start sound: %s\nend sound:   %s\n",a.start_sound,a.end_sound); }
     fprintf(stderr,"segment filter: min %.2fs, rms %.0f\n", a.min_segment_seconds, a.min_transcribe_rms);
     fprintf(stderr,"text logging: %s\n", a.quiet ? "disabled" : "enabled");

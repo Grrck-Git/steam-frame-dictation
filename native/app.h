@@ -19,7 +19,7 @@
 extern volatile sig_atomic_t g_stop;
 
 struct bytes { uint8_t *p; size_t n, cap; };
-typedef struct seg_node { struct bytes pcm; bool append_return; struct seg_node *next; } seg_node;
+typedef struct seg_node { struct bytes pcm; struct seg_node *next; } seg_node;
 typedef struct text_node { char *text; struct text_node *next; } text_node;
 typedef struct { pthread_mutex_t mu; pthread_cond_t cv; seg_node *head, *tail; bool done; } seg_queue;
 typedef struct { pthread_mutex_t mu; pthread_cond_t cv; text_node *head, *tail; bool done; } text_queue;
@@ -49,8 +49,8 @@ double pcm_rms(const uint8_t *data, size_t n);
 // queues
 void segq_init(seg_queue *q);
 void textq_init(text_queue *q);
-void segq_push(seg_queue *q, struct bytes *pcm, bool append_return);
-bool segq_pop(seg_queue *q, struct bytes *out, bool *append_return);
+void segq_push(seg_queue *q, struct bytes *pcm);
+bool segq_pop(seg_queue *q, struct bytes *out);
 void textq_push(text_queue *q, char *text);
 bool textq_pop(text_queue *q, char **out);
 void segq_done(seg_queue *q);

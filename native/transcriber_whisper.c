@@ -78,8 +78,8 @@ static char *transcribe_segment(app *a, const uint8_t *pcm, size_t n) {
 }
 
 void *segment_thread_main(void *vp) {
-    app *a = vp; struct bytes pcm={0}; bool append_return=false;
-    while(segq_pop(&a->segq, &pcm, &append_return)) {
+    app *a = vp; struct bytes pcm={0};
+    while(segq_pop(&a->segq, &pcm)) {
         if (pcm.n) {
             double duration = (double)pcm.n / 2.0 / (double)a->rate;
             double rms = pcm_rms(pcm.p, pcm.n);
@@ -101,7 +101,6 @@ void *segment_thread_main(void *vp) {
                 free(text); bytes_free(&pcm);
             }
         }
-        if (append_return) textq_push(&a->textq, strdup("\n"));
     }
     textq_done(&a->textq);
     return NULL;
