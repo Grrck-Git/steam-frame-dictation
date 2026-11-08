@@ -2,7 +2,11 @@
 # Download a published release; no compiler or source checkout required.
 set -euo pipefail
 main() {
-  local repo=khvn26/steam-frame-dictation tag url archive checksum root asset
+  local repo=Grrck-Git/steam-frame-dictation tag=${1:-} url archive checksum root asset
+  if (( $# > 1 )) || { (( $# == 1 )) && [[ ! "$tag" =~ ^v[0-9][a-zA-Z0-9._-]*$ ]]; }; then
+    echo 'Usage: bash install.sh [release-tag]' >&2
+    return 1
+  fi
   # Global so the EXIT trap can clean up after main returns.
   work=''
   [[ $(id -u) != 0 ]] || { echo 'Run as your normal user, not sudo/root.' >&2; return 1; }
@@ -17,11 +21,13 @@ main() {
   # Resolve latest once, then fetch immutable versioned assets (avoids release races).
   if [[ ${SFD_PRIVATE:-0} == 1 ]]; then
     command -v gh >/dev/null || { echo 'Private downloads require authenticated GitHub CLI.' >&2; return 1; }
-    tag=$(gh release view --repo "$repo" --json tagName --jq .tagName)
-  else
+    if [[ -z "$tag" ]]; then
+      tag=$(gh release view --repo "$repo" --json tagName --jq .tagName)
+    fi
+  elif [[ -z "$tag" ]]; then
     url=$(curl --fail --silent --show-error --location --retry 3 --connect-timeout 20 \
       --output /dev/null --write-out '%{url_effective}' "https://github.com/$repo/releases/latest") || {
-      echo 'Release unavailable. If the repository is private, use the authenticated README command.' >&2; return 1;
+      echo "Could not find a published release in $repo." >&2; return 1;
     }
     [[ "$url" == "https://github.com/$repo/releases/tag/"* ]] || { echo 'Unexpected release URL.' >&2; return 1; }
     tag=${url##*/}
