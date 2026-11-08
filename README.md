@@ -2,13 +2,13 @@
 
 https://github.com/user-attachments/assets/c349ab1f-26a2-4fca-aa1a-0caed856ae62
 
-Offline dictation on the Steam Frame.
+Offline, on-device Whisper dictation for Steam Frame. This fork maintains SteamOS compatibility and publishes ARM64 packages. See the [v0.2.0 release](https://github.com/Grrck-Git/steam-frame-dictation/releases/tag/v0.2.0).
 
 MIT licensed. See [LICENSE](LICENSE) and [third-party notices](third_party/README.md).
 
 ## Install
 
-Once this fork has a published release, run on your Steam Frame:
+Run on your Steam Frame as your normal user to install the latest published release:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Grrck-Git/steam-frame-dictation/main/install.sh | bash
@@ -47,6 +47,47 @@ Uninstall:
 ```bash
 ~/.local/share/steam-frame-dictation/bin/steam-frame-dictation --uninstall
 ```
+### Back up and restore an existing install
+
+If your current build came from upstream or a manual package, keep a local
+backup before upgrading. Run these commands on the Steam Frame. They assume
+the default install paths and a regular user service file.
+
+```bash
+(
+  set -e
+  backup=$(mktemp -d "$HOME/frame-dictation-backup.XXXXXX")
+  tar -C "$HOME" -czf "$backup/installed.tar.gz" \
+    .local/share/steam-frame-dictation .config/systemd/user/frame-dictation.service
+  tar -tzf "$backup/installed.tar.gz" >/dev/null
+  printf 'Backup verified: %s\n' "$backup/installed.tar.gz"
+)
+```
+
+To restore, replace the example archive path with the path printed above.
+This moves the current install aside before restoring the saved files.
+
+```bash
+(
+  set -e
+  backup="$HOME/frame-dictation-backup.XXXXXX/installed.tar.gz"
+  tar -tzf "$backup" >/dev/null
+  previous=$(mktemp -d "$HOME/frame-dictation-before-restore.XXXXXX")
+  systemctl --user stop frame-dictation.service
+  for path in .local/share/steam-frame-dictation .config/systemd/user/frame-dictation.service; do
+    if [ -e "$HOME/$path" ]; then
+      mkdir -p "$previous/$(dirname "$path")"
+      mv -- "$HOME/$path" "$previous/$path"
+    fi
+  done
+  tar -C "$HOME" -xzf "$backup"
+  systemctl --user daemon-reload
+  systemctl --user enable --now frame-dictation.service
+  systemctl --user is-active frame-dictation.service
+  "$HOME/.local/share/steam-frame-dictation/bin/steam-frame-dictation" --version
+)
+```
+
 ## How it works
 
 - Idle by default.
@@ -59,6 +100,13 @@ Uninstall:
 During active dictation, the service lowers system audio volume, then restores the previous volume when dictation stops.
 
 The daemon exclusively grabs the aux input device while running. This means that, currently, default aux behaviors like pointer/passthrough shortcuts are disrupted while the service is active.
+
+## Headset verification
+
+On one Steam Frame, v0.2.0 passed both manual checks:
+
+- **Terminal:** Press Aux, wait for the start chime, dictate a short phrase, and press Aux again before the silence timeout. The phrase stays at the prompt without running. Press Ctrl+C to clear it.
+- **Browser:** Focus a text field, start dictation, and pause after speaking. Dictation stops on silence and leaves the text in the field.
 
 ## Design goals
 
