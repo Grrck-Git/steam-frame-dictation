@@ -8,10 +8,10 @@ MIT licensed. See [LICENSE](LICENSE) and [third-party notices](third_party/READM
 
 ## Install
 
-In your console, run:
+Once this fork has a published release, run on your Steam Frame:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/khvn26/steam-frame-dictation/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Grrck-Git/steam-frame-dictation/main/install.sh | bash
 ```
 
 The installer copies the binary, Whisper libraries, and model to:
@@ -25,6 +25,16 @@ and installs/enables the user service:
 ```text
 ~/.config/systemd/user/frame-dictation.service
 ```
+
+To reinstall a specific published release, including an older known-good version,
+pass its tag in place of `<tag>`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Grrck-Git/steam-frame-dictation/main/install.sh | bash -s -- '<tag>'
+```
+
+This replaces the current installation. Record the working release tag before
+updating so you can reinstall it if needed.
 
 Version check:
 
@@ -44,7 +54,7 @@ Uninstall:
 - Chime means it is safe to speak.
 - It is safe to make short pauses. The dictation continues committing the text.
 - A long pause stops dictation. You hear a chime when it happens.
-- Press aux while dictating to stop immediately, and send all recorded text + the Return key.
+- Press aux while dictating to stop recording and finish typing the pending text without pressing Return.
 
 During active dictation, the service lowers system audio volume, then restores the previous volume when dictation stops.
 
@@ -76,6 +86,20 @@ These are development measurements, not a controlled benchmark of every release.
 Transcription timings exclude the pause needed to commit a segment (default 0.35 seconds), queue wait, and keyboard output. They are not end-to-end time-to-text guarantees. Longer segments, competing workloads, thermal conditions, and model/settings changes can affect latency and accuracy.
 
 ## Build
+
+For a test package, run the **release** workflow from the fork's **Actions**
+tab and select the branch to test. A manual run produces the
+`steam-frame-dictation-release` artifact without publishing a GitHub release.
+Download and unzip the artifact, then verify and unpack the archive on the
+Steam Frame:
+
+```sh
+sha256sum --check ./*.sha256
+```
+
+Extract the versioned archive and run its bundled `install.sh` as your normal
+user. This replaces the existing dictation install, so keep a known-good
+package or published tag available before testing.
 
 Build and install the native binary:
 
